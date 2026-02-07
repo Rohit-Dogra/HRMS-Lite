@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || '/api';
+const BASE = import.meta.env.VITE_API_URL || 'https://hrms-lite-52wx.onrender.com';
 
 async function request(path, options = {}) {
   const url = path.startsWith('http') ? path : `${BASE}${path}`;
@@ -6,14 +6,14 @@ async function request(path, options = {}) {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options.headers },
   });
-  const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = null;
-  }
   if (!res.ok) {
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
     let message = res.statusText;
     if (data?.detail) {
       if (typeof data.detail === 'string') message = data.detail;
@@ -22,7 +22,12 @@ async function request(path, options = {}) {
     }
     throw new Error(message);
   }
-  return data;
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
 }
 
 export const api = {

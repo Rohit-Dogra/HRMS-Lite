@@ -21,6 +21,7 @@ export default function Dashboard() {
 
   if (loading) return <Loading />
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />
+  if (!data) return <ErrorState message="Failed to load dashboard data" onRetry={() => window.location.reload()} />
 
   const { total_employees, total_attendance_records, present_days_per_employee } = data
 
