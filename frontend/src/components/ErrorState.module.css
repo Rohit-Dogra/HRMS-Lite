@@ -1,0 +1,29 @@
+.wrapper {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid #fecaca;
+}
+
+.text {
+  margin: 0 0 1rem 0;
+  font-size: 0.9375rem;
+}
+
+.retry {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.retry:hover {
+  background: var(--bg-subtle);
+}

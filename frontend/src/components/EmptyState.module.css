@@ -1,0 +1,13 @@
+.wrapper {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+}
+
+.text {
+  margin: 0;
+  font-size: 0.9375rem;
+}
