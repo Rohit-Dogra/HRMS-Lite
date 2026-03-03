@@ -7,6 +7,8 @@ import EmptyState from '../components/EmptyState'
 import ErrorState from '../components/ErrorState'
 import styles from './Employees.module.css'
 
+const EMPLOYEES_CACHE_KEY = 'hrms-employees-cache'
+
 export default function Employees() {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,15 +18,40 @@ export default function Employees() {
   const [formError, setFormError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
 
-  const load = () => {
+  const load = (options = { allowError: true }) => {
     setError(null)
-    api.employees.list()
-      .then(setList)
-      .catch((e) => setError(e.message))
+    return api.employees.list()
+      .then((res) => {
+        setList(res)
+        try {
+          localStorage.setItem(EMPLOYEES_CACHE_KEY, JSON.stringify(res))
+        } catch {
+          // ignore storage errors
+        }
+      })
+      .catch((e) => {
+        if (options.allowError) setError(e.message)
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    // Show cached list immediately if available
+    try {
+      const cached = localStorage.getItem(EMPLOYEES_CACHE_KEY)
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed) {
+          setList(parsed)
+          setLoading(false)
+        }
+      }
+    } catch {
+      // ignore cache errors
+    }
+    // Always try to refresh from server (but don't show error if we had cache)
+    load({ allowError: !localStorage.getItem(EMPLOYEES_CACHE_KEY) })
+  }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()

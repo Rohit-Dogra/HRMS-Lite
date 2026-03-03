@@ -7,6 +7,9 @@ import EmptyState from '../components/EmptyState'
 import ErrorState from '../components/ErrorState'
 import styles from './Attendance.module.css'
 
+const EMPLOYEES_CACHE_KEY = 'hrms-employees-cache'
+const ATTENDANCE_CACHE_KEY = 'hrms-attendance-records-cache'
+
 export default function Attendance() {
   const [employees, setEmployees] = useState([])
   const [records, setRecords] = useState([])
@@ -22,17 +25,53 @@ export default function Attendance() {
   const [empRecords, setEmpRecords] = useState([])
   const [loadingEmp, setLoadingEmp] = useState(false)
 
-  const loadEmployees = () => api.employees.list().then(setEmployees)
+  const loadEmployees = () => api.employees.list().then((res) => {
+    setEmployees(res)
+    try {
+      localStorage.setItem(EMPLOYEES_CACHE_KEY, JSON.stringify(res))
+    } catch {
+      // ignore storage errors
+    }
+  })
   const loadRecords = () => {
     const params = {}
     if (fromDate) params.fromDate = fromDate
     if (toDate) params.toDate = toDate
     if (filterEmpId) params.employee_id = filterEmpId
-    return api.attendance.list(params).then(setRecords)
+    return api.attendance.list(params).then((res) => {
+      setRecords(res)
+      // Only cache the unfiltered initial table
+      if (!fromDate && !toDate && !filterEmpId) {
+        try {
+          localStorage.setItem(ATTENDANCE_CACHE_KEY, JSON.stringify(res))
+        } catch {
+          // ignore storage errors
+        }
+      }
+    })
   }
 
   useEffect(() => {
     let cancelled = false
+    // Try to show cached data instantly on first visit
+    try {
+      const cachedEmployees = localStorage.getItem(EMPLOYEES_CACHE_KEY)
+      const cachedRecords = localStorage.getItem(ATTENDANCE_CACHE_KEY)
+      if (cachedEmployees) {
+        const parsedEmp = JSON.parse(cachedEmployees)
+        if (parsedEmp && !cancelled) setEmployees(parsedEmp)
+      }
+      if (cachedRecords) {
+        const parsedRec = JSON.parse(cachedRecords)
+        if (parsedRec && !cancelled) {
+          setRecords(parsedRec)
+          setLoading(false)
+        }
+      }
+    } catch {
+      // ignore cache errors
+    }
+
     Promise.all([loadEmployees(), loadRecords()])
       .catch((e) => { if (!cancelled) setError(e.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
