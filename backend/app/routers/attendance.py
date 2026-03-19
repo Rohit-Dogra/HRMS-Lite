@@ -1,3 +1,5 @@
+
+
 """Attendance API (MongoDB)."""
 from datetime import date
 from bson import ObjectId
@@ -54,12 +56,13 @@ def list_attendance(
             q["date"] = {"$lte": t}
         else:
             q["date"]["$lte"] = t
-    cursor = att_col.find(q).sort([("date", -1), ("_id", -1)])
-    out = []
-    for doc in cursor:
-        emp = emp_col.find_one({"_id": doc["employee_id"]})
-        rec = _att_to_response(doc, emp)
-        out.append(rec)
+    docs = list(att_col.find(q).sort([("date", -1), ("_id", -1)]))
+    if not docs:
+        return []
+    # Single batch query for all employees (avoids N+1: was 1 + N round-trips, now 2)
+    emp_ids = list({doc["employee_id"] for doc in docs})
+    employees = {doc["_id"]: doc for doc in emp_col.find({"_id": {"$in": emp_ids}})}
+    out = [_att_to_response(doc, employees.get(doc["employee_id"])) for doc in docs]
     return out
 
 

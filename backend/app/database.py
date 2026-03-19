@@ -1,3 +1,4 @@
+
 """MongoDB connection for HRMS Lite."""
 import os
 from pymongo import MongoClient
@@ -6,13 +7,20 @@ from pymongo.database import Database
 MONGO_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("MONGODB_DB", "hrms_lite")
 
+# Production: avoid long timeouts and use connection pooling
+MONGO_OPTIONS = {
+    "serverSelectionTimeoutMS": 10000,
+    "connectTimeoutMS": 10000,
+    "maxPoolSize": 50,
+}
+
 _client: MongoClient | None = None
 
 
 def get_client() -> MongoClient:
     global _client
     if _client is None:
-        _client = MongoClient(MONGO_URI)
+        _client = MongoClient(MONGO_URI, **MONGO_OPTIONS)
     return _client
 
 
