@@ -1,14 +1,10 @@
 .wrapper {
-  padding: 2.5rem 2.75rem;
+  padding: 2rem;
   text-align: center;
   color: var(--text-muted);
-  background: rgba(15, 23, 42, 0.75);
+  background: var(--bg);
   border-radius: var(--radius-sm);
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.9);
+  border: 1px dashed var(--border-strong);
 }
 
-.text {
-  margin: 0;
-  font-size: 0.9375rem;
-}
+.text { margin: 0; font-size: 0.9rem; }

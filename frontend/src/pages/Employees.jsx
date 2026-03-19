@@ -9,6 +9,11 @@ import styles from './Employees.module.css'
 
 const EMPLOYEES_CACHE_KEY = 'hrms-employees-cache'
 
+function initials(name) {
+  if (!name) return '?'
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
 export default function Employees() {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -23,33 +28,20 @@ export default function Employees() {
     return api.employees.list()
       .then((res) => {
         setList(res)
-        try {
-          localStorage.setItem(EMPLOYEES_CACHE_KEY, JSON.stringify(res))
-        } catch {
-          // ignore storage errors
-        }
+        try { localStorage.setItem(EMPLOYEES_CACHE_KEY, JSON.stringify(res)) } catch { }
       })
-      .catch((e) => {
-        if (options.allowError) setError(e.message)
-      })
+      .catch((e) => { if (options.allowError) setError(e.message) })
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    // Show cached list immediately if available
     try {
       const cached = localStorage.getItem(EMPLOYEES_CACHE_KEY)
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed) {
-          setList(parsed)
-          setLoading(false)
-        }
+        if (parsed) { setList(parsed); setLoading(false) }
       }
-    } catch {
-      // ignore cache errors
-    }
-    // Always try to refresh from server (but don't show error if we had cache)
+    } catch { }
     load({ allowError: !localStorage.getItem(EMPLOYEES_CACHE_KEY) })
   }, [])
 
@@ -62,10 +54,7 @@ export default function Employees() {
     }
     setSubmitting(true)
     api.employees.create(form)
-      .then(() => {
-        setForm({ employee_id: '', full_name: '', email: '', department: '' })
-        load()
-      })
+      .then(() => { setForm({ employee_id: '', full_name: '', email: '', department: '' }); load() })
       .catch((e) => setFormError(e.message))
       .finally(() => setSubmitting(false))
   }
@@ -83,54 +72,87 @@ export default function Employees() {
   if (error) return <ErrorState message={error} onRetry={load} />
 
   return (
-    <div>
-      <h1 className={styles.pageTitle}>Employees</h1>
+    <div className={styles.page}>
+      {/* Page header */}
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Employees</h1>
+        {list.length > 0 && (
+          <span className={styles.countBadge}>{list.length} total</span>
+        )}
+      </div>
 
-      <Card title="Add employee">
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.row}>
-            <label>Employee ID</label>
-            <input
-              value={form.employee_id}
-              onChange={(e) => setForm((f) => ({ ...f, employee_id: e.target.value }))}
-              placeholder="e.g. EMP001"
-              required
-            />
-          </div>
-          <div className={styles.row}>
-            <label>Full name</label>
-            <input
-              value={form.full_name}
-              onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-              placeholder="Full name"
-              required
-            />
-          </div>
-          <div className={styles.row}>
-            <label>Email</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder="email@company.com"
-              required
-            />
-          </div>
-          <div className={styles.row}>
-            <label>Department</label>
-            <input
-              value={form.department}
-              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-              placeholder="e.g. Engineering"
-              required
-            />
-          </div>
-          {formError && <p className={styles.formError}>{formError}</p>}
-          <Button type="submit" disabled={submitting}>{submitting ? 'Adding...' : 'Add employee'}</Button>
-        </form>
+      {/* Add employee form */}
+      <Card>
+        <div className={styles.cardHeader}>
+          <span className={styles.cardTitle}>Add employee</span>
+        </div>
+        <div className={styles.formBody}>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <div className={styles.formGrid}>
+              <div className={styles.field}>
+                <label htmlFor="emp-id">Employee ID</label>
+                <input
+                  id="emp-id"
+                  value={form.employee_id}
+                  onChange={(e) => setForm((f) => ({ ...f, employee_id: e.target.value }))}
+                  placeholder="e.g. EMP001"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="emp-name">Full name</label>
+                <input
+                  id="emp-name"
+                  value={form.full_name}
+                  onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                  placeholder="Full name"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="emp-email">Email</label>
+                <input
+                  id="emp-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="email@company.com"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="emp-dept">Department</label>
+                <input
+                  id="emp-dept"
+                  value={form.department}
+                  onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                  placeholder="e.g. Engineering"
+                  required
+                />
+              </div>
+            </div>
+
+            {formError && (
+              <p className={styles.formError}>{formError}</p>
+            )}
+
+            <button type="submit" className={styles.submitBtn} disabled={submitting}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {submitting ? 'Adding…' : 'Add employee'}
+            </button>
+          </form>
+        </div>
       </Card>
 
-      <Card title="All employees">
+      {/* Employees table */}
+      <Card>
+        <div className={styles.cardHeader}>
+          <span className={styles.cardTitle}>All employees</span>
+        </div>
+
         {list.length === 0 ? (
           <EmptyState message="No employees yet. Add one above." />
         ) : (
@@ -138,9 +160,8 @@ export default function Employees() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Employee ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
+                  <th>Employee</th>
+                  <th>ID</th>
                   <th>Department</th>
                   <th></th>
                 </tr>
@@ -148,14 +169,25 @@ export default function Employees() {
               <tbody>
                 {list.map((emp) => (
                   <tr key={emp.id}>
-                    <td>{emp.employee_id}</td>
-                    <td>{emp.full_name}</td>
-                    <td>{emp.email}</td>
-                    <td>{emp.department}</td>
                     <td>
-                      <Button variant="danger" onClick={() => handleDelete(emp.id)} disabled={deletingId === emp.id}>
-                        {deletingId === emp.id ? 'Deleting...' : 'Delete'}
-                      </Button>
+                      <div className={styles.empCell}>
+                        <span className={styles.avatar}>{initials(emp.full_name)}</span>
+                        <div>
+                          <div className={styles.empName}>{emp.full_name}</div>
+                          <div className={styles.empEmail}>{emp.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span className={styles.empId}>{emp.employee_id}</span></td>
+                    <td><span className={styles.deptBadge}>{emp.department}</span></td>
+                    <td>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleDelete(emp.id)}
+                        disabled={deletingId === emp.id}
+                      >
+                        {deletingId === emp.id ? 'Deleting…' : 'Delete'}
+                      </button>
                     </td>
                   </tr>
                 ))}
